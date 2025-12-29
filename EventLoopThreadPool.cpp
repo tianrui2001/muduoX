@@ -1,0 +1,49 @@
+#include "EventLoopThreadPool.h"
+#include "EventLoopThread.h"
+
+#include <memory>
+
+EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg)
+    : baseLoop_(baseLoop),
+        name_(nameArg),
+        started_(false),
+        numThreads_(0),
+        next_(0){}
+
+~EventLoopThreadPool(){}
+
+void start(const ThreadInitCallback &cb = ThreadInitCallback()){
+    started_ = true;
+
+    for(int i=0; i<numThreads_; ++i){
+        std::string threadName = name_ + std::to_string(i);
+        EventLoopThread *t = new EventLoopThread(cb, threadName);
+        threads_.emplace_back(std::unique_ptr<EventLoopThread>(t));
+        loops_.emplace_back(t->startLoop());
+    }
+
+    // 整个服务端只有一个线程运行baseLoop
+    if(numThreads_ == 0 && cb){
+        cb(baseLoop_);
+    }
+}
+
+EventLoop* getNextLoop(){
+    EventLoop *loop = baseLoop_;
+
+    // 通过轮询获取下一个处理事件的loop
+    // 如果没设置多线程数量，则不会进去，相当于直接返回baseLoop
+    if(!loops_.empty()){
+        loop = loops_[next_++ % loops_.size()];
+    }
+    return loop;
+}
+
+std::vector<EventLoop *> getAllLoops(){
+    if(loops_.empty()){
+        return std::vector<EventLoop*>(1, baseLoop_);
+    }
+    else {
+        return loops_;
+    }
+}
