@@ -8,7 +8,7 @@
 // n = network (网络)
 // to = to (到)
 // s = short (短整型, 16位)
-InetAddress::InetAddress(uint16_t port = 0, std::string ip ){
+InetAddress::InetAddress(uint16_t port, std::string ip ){
     memset(&addr_, 0, sizeof(addr_));
     addr_.sin_family = AF_INET;
     addr_.sin_port = htons(port);

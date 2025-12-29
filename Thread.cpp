@@ -3,9 +3,9 @@
 
 #include <semaphore.h>
 
-std::atomic_int Thread::numCreated_ = 0;
+std::atomic_int Thread::numCreated_(0);
 
-explicit Thread::Thread(ThreadFunc func, const std::string &name = std::string())
+Thread::Thread(ThreadFunc func, const std::string &name)
     : started_(false),
       joined_(false),
       threadPtr_(nullptr),
@@ -28,7 +28,7 @@ void Thread::start(){
     sem_init(&sem, false, 0);
 
     // 创建线程
-    threadPtr_ = std::shared_ptr<std::thread>(new std::thread([this](){
+    threadPtr_ = std::shared_ptr<std::thread>(new std::thread([&](){
         tid_ = CurrentThread::tid();
         sem_post(&sem);
         func_();

@@ -33,7 +33,7 @@ EventLoop* EventLoopThread::startLoop(){
 }
 
 
-coid EventLoopThread::threadFunc(){
+void EventLoopThread::threadFunc(){
     // 创建一个独立的EventLoop对象 和上面的线程是一一对应的 级one loop per thread
     EventLoop loop;
 

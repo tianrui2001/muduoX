@@ -1,18 +1,19 @@
 #include "EventLoopThreadPool.h"
 #include "EventLoopThread.h"
+#include "Logger.h"
 
 #include <memory>
 
-EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg)
+EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg)
     : baseLoop_(baseLoop),
         name_(nameArg),
         started_(false),
         numThreads_(0),
         next_(0){}
 
-~EventLoopThreadPool(){}
+EventLoopThreadPool::~EventLoopThreadPool(){}
 
-void start(const ThreadInitCallback &cb = ThreadInitCallback()){
+void EventLoopThreadPool::start(const ThreadInitCallback &cb){
     started_ = true;
 
     for(int i=0; i<numThreads_; ++i){
@@ -28,7 +29,7 @@ void start(const ThreadInitCallback &cb = ThreadInitCallback()){
     }
 }
 
-EventLoop* getNextLoop(){
+EventLoop* EventLoopThreadPool::getNextLoop(){
     EventLoop *loop = baseLoop_;
 
     // 通过轮询获取下一个处理事件的loop
@@ -39,7 +40,7 @@ EventLoop* getNextLoop(){
     return loop;
 }
 
-std::vector<EventLoop *> getAllLoops(){
+std::vector<EventLoop *> EventLoopThreadPool::getAllLoops(){
     if(loops_.empty()){
         return std::vector<EventLoop*>(1, baseLoop_);
     }

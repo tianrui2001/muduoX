@@ -2,10 +2,13 @@
 
 #include <mutex>
 #include <string>
+#include <condition_variable>
+#include <functional>
 
 #include "Thread.h"
 #include "Nocopyable.h"
 
+class EventLoop;
 class EventLoopThread : nocopyable
 {
 public:
@@ -18,7 +21,7 @@ public:
     EventLoop *startLoop();
 
 private:
-    coid threadFunc();
+    void threadFunc();
     
     EventLoop *loop_;
     bool exiting_;

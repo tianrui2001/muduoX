@@ -11,8 +11,9 @@
 #include "Nocopyable.h"
 #include "CurrentThread.h"
 #include "Channel.h"
-#include "Poller.h"
 
+class Poller;
+class Channel;
 class EventLoop :nocopyable
 {
 public:

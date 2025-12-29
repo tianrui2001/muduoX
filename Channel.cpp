@@ -1,6 +1,7 @@
 #include "Channel.h"
 #include "TimeStamp.h"
 #include "Logger.h"
+#include "EventLoop.h"
 
 #include <sys/epoll.h>
 

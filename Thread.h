@@ -5,7 +5,7 @@
 #include <atomic>
 #include <string>
 #include <unistd.h>
-#include <funtional>
+#include <functional>
 
 #include "Nocopyable.h"
 
