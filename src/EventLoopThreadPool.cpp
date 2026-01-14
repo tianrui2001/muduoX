@@ -17,7 +17,10 @@ void EventLoopThreadPool::start(const ThreadInitCallback &cb){
     started_ = true;
 
     for(int i=0; i<numThreads_; ++i){
-        std::string threadName = name_ + std::to_string(i);
+        // sprintf比string + std::to_string效率更高
+        char threadName[name_.size() + 32];
+        sprintf(threadName, "%s%d", name_.c_str(), i);
+        
         EventLoopThread *t = new EventLoopThread(cb, threadName);
         threads_.emplace_back(std::unique_ptr<EventLoopThread>(t));
         loops_.emplace_back(t->startLoop());

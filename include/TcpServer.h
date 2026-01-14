@@ -12,7 +12,9 @@
 #include "Nocopyable.h"
 #include "EventLoopThreadPool.h"
 #include "Callbacks.h"
-
+#include "TcpConnection.h"
+#include "Buffer.h"
+#include "TimeStamp.h"
 
 class TcpServer : nocopyable
 {
@@ -52,8 +54,8 @@ private:
     ConnectionCallback connectionCallback_;       // 新连接回调
     MessageCallback messageCallback_;             // 消息回调
     WriteCompleteCallback writeCompleteCallback_; // 写完成回调
-
     ThreadInitCallback threadInitCallback_;       // 线程初始化回调
+    
     std::atomic_int started_;   // 标识TcpServer是否已经启动
     int nextConnId_;            // 下一个连接的ID
     ConnectionMap connections_; // 存储所有连接的map

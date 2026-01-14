@@ -56,7 +56,7 @@ EventLoop::EventLoop()
 
     // 绑定wakeupChannel_的事件到Poller中
     wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));
-    wakeupChannel_->enableReading();
+    wakeupChannel_->enableReading();    // 注册到Poller
 }
 
 EventLoop::~EventLoop(){
