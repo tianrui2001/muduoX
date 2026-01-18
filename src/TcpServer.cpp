@@ -75,7 +75,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr){
     sockaddr_in local;
     ::memset(&local, 0, sizeof local);
     socklen_t addrlen = sizeof local;
-    if(::getsockname(sockfd, (sockaddr*)&local, &addrlen)){
+    if(::getsockname(sockfd, (sockaddr*)&local, &addrlen)){ // 获取套接字的本地地址信息
         LOG_ERROR("TcpServer:: getsockname error\n");
     }
 

@@ -43,7 +43,7 @@ void Acceptor::listen(){
 }
 
 void Acceptor::handleRead(){
-    InetAddress peerAddr;
+    InetAddress peerAddr;   // 客户端地址
     int connfd = acceptSocket_.accept(&peerAddr);
     if(connfd >= 0){
         if(newConnectionCallback_){

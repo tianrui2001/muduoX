@@ -11,9 +11,13 @@
 #include "Nocopyable.h"
 #include "CurrentThread.h"
 #include "Channel.h"
+#include "TimerId.h"
+#include "Callbacks.h"
 
 class Poller;
 class Channel;
+class TimerQueue;
+
 class EventLoop :nocopyable
 {
 public:
@@ -32,6 +36,12 @@ public:
     void updateChannel(Channel *channel);
     void removeChannel(Channel *channel);
     bool hasChannel(Channel *channel);
+
+    // 时间相关的函数
+    TimerId runAt(Timestamp time, TimerCallback cb);
+    TimerId runAfter(double delay, TimerCallback cb);
+    TimerId runEvery(double interval, TimerCallback cb);
+    void cancel(TimerId timerId);
 
     Timestamp pollReturnTime() const { return pollReturnTime_;}
 
@@ -58,6 +68,7 @@ private:
 
     Timestamp pollReturnTime_;  // poller返回发生事件的channels的时间点
     std::unique_ptr<Poller> poller_;
+    std::unique_ptr<TimerQueue> timerQueue_;
 
     int wakeupFd_;  // 作用：当mainLoop获取一个新用户的Channel 需通过轮询算法选择一个subLoop 通过该成员唤醒subLoop处理Channel
     std::unique_ptr<Channel> wakeupChannel_;
