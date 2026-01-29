@@ -3,6 +3,7 @@
 #include "Poller.h"
 #include "Channel.h"
 #include "TimerQueue.h"
+#include "IOuring.h"
 
 #include <sys/eventfd.h>
 #include <vector>
@@ -31,10 +32,10 @@ const int kPollTimeMs = 10000; // 10s
  *     eventfd用于不同亲缘关系的进程之间通信的话需要把eventfd放在几个进程共享的共享内存中（没有测试过）。
  */
 // 创建wakeupfd 用来notify唤醒subReactor处理新来的channel
-int createEventfd(){
+static int createEventfd(){
     int eventfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if(eventfd < 0){
-        LOG_FATAL("eventfd error:%d\n", errno);
+        LOG_FATAL << "eventfd error:" << errno << "\n";
     }
     return eventfd;
 }
@@ -47,11 +48,11 @@ EventLoop::EventLoop()
       timerQueue_(new TimerQueue(this)),
       wakeupFd_(createEventfd()),
       wakeupChannel_(new Channel(this, wakeupFd_)),
-      callingPendingFunctors_(false) 
+      callingPendingFunctors_(false),
+      uringManager_(new UringManager(this)) 
 {
-    LOG_DEBUG("EventLoop created %p in thread %d\n", this, threadId_);
     if(t_loopInThisTread){
-        LOG_FATAL("Another EventLoop %p exists in this thread %d\n", t_loopInThisTread, threadId_);
+        LOG_FATAL << "Another EventLoop " << t_loopInThisTread << " exists in this thread " << threadId_ << "\n";
     } else {
         t_loopInThisTread = this;  // 记录当前线程的EventLoop
     }
@@ -73,8 +74,6 @@ void EventLoop::loop(){
     looping_ = true;
     quit_ = false;
 
-    LOG_INFO("EventLoop %p start looping\n", this);
-
     while(!quit_){
         activeChannels_.clear();
         // 监听事件，返回发生事件的channels
@@ -88,7 +87,6 @@ void EventLoop::loop(){
         doPendingFunctors();  // 执行回调操作
     }
 
-    LOG_INFO("EventLoop %p stop looping\n", this);
     looping_ = false;
 }
 
@@ -131,7 +129,7 @@ void EventLoop::wakeup(){
     uint64_t one = 1;
     ssize_t n = ::write(wakeupFd_, &one, sizeof one);
     if(n != sizeof one){
-        LOG_ERROR("EventLoop::wakeup() writes %lu bytes instead of 8\n", n);
+        LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8\n";
     }
 }
 
@@ -139,7 +137,7 @@ void EventLoop::handleRead(){
     uint64_t one = 1;
     ssize_t n = ::read(wakeupFd_, &one, sizeof one);
     if(n != sizeof one){
-        LOG_ERROR("EventLoop::handleRead() reads %lu bytes instead of 8\n", n);
+        LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8\n";
     }
 }
 

@@ -15,14 +15,14 @@ Socket::~Socket(){
 void Socket::bindAddress(const InetAddress &addr){
     int ret = ::bind(sockfd_, (sockaddr*)addr.getSockAddr(), sizeof(sockaddr_in));
     if(ret){
-        LOG_FATAL("Bind sockfd:%d fail\n", sockfd_);
+        LOG_FATAL << "Bind sockfd:" << sockfd_ << " fail\n";
     }
 }
 
 void Socket::listen(){
     int ret = ::listen(sockfd_, 1024);
     if(ret){
-        LOG_FATAL("Listen sockfd:%d fail\n", sockfd_);
+        LOG_FATAL << "Listen sockfd:" << sockfd_ << " fail\n";
     }
 }
 
@@ -45,7 +45,7 @@ void Socket::shutdownWrite(){
 
     int ret = ::shutdown(sockfd_, SHUT_WR);
     if(ret < 0){
-        LOG_ERROR("ShutdownWrite sockfd:%d fail\n", sockfd_);
+        LOG_ERROR << "ShutdownWrite sockfd:" << sockfd_ << " fail\n";
     }
 }
 

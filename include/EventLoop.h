@@ -13,6 +13,7 @@
 #include "Channel.h"
 #include "TimerId.h"
 #include "Callbacks.h"
+#include "IOuring.h"
 
 class Poller;
 class Channel;
@@ -51,6 +52,8 @@ public:
      */
     bool isInLoopThread() const { return threadId_ == CurrentThread::tid();}
 
+    UringManager* getUringManager() { return uringManager_.get(); }
+
 private:
     /**
      * 给eventfd返回的文件描述符wakeupFd_绑定的事件回调 
@@ -78,4 +81,6 @@ private:
     std::atomic_bool callingPendingFunctors_;   // 标识当前loop是否有需要执行的回调操作, 这里区别于io操作
     std::vector<Functor> pendingFunctors_;  // 存储loop需要执行的所有回调操作
     std::mutex mutex_;  // 保护上面vector的线程安全操作
+
+    std::unique_ptr<UringManager> uringManager_;
 };

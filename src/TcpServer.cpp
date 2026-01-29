@@ -11,7 +11,7 @@ static EventLoop* CheckLoopNotNull(EventLoop* loop)
 {
     if(loop == nullptr)
     {
-        LOG_FATAL("%s:%s:%d mainLoop is null! \n", __FILE__, __FUNCTION__, __LINE__);
+        LOG_FATAL << " mainLoop is null! \n";
     }
 
     return loop;
@@ -68,15 +68,12 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr){
     snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_++);
     std::string connName = name_ + buf;
 
-    LOG_INFO("TcpServer::newConnection [%s] - new connection from %s\n",
-             connName.c_str(), peerAddr.toIpPort().c_str());
-    
     // 获取该连接的本端地址信息
     sockaddr_in local;
     ::memset(&local, 0, sizeof local);
     socklen_t addrlen = sizeof local;
     if(::getsockname(sockfd, (sockaddr*)&local, &addrlen)){ // 获取套接字的本地地址信息
-        LOG_ERROR("TcpServer:: getsockname error\n");
+        LOG_ERROR << "TcpServer:: getsockname error";
     }
 
     InetAddress localAddr(local);
@@ -111,9 +108,6 @@ void TcpServer::removeConnection(const TcpConnectionPtr &conn){
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr &conn){
-    LOG_INFO("TcpServer::removeConnectionInLoop [%s] - connection %s\n",
-             name_.c_str(), conn->name().c_str());
-    
     connections_.erase(conn->name());
     EventLoop *ioLoop = conn->getLoop();
     ioLoop->queueInLoop(

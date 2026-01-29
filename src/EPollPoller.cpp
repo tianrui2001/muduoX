@@ -15,7 +15,7 @@ EPollPoller::EPollPoller(EventLoop *loop)
     epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
     events_(kInitEventListSize) {
         if(epollfd_ < 0){
-            LOG_FATAL("EPollPoller:: epoll_create1 error:%d \n", errno);
+            LOG_FATAL << "EPollPoller:: epoll_create1 error:" << errno << "\n";
         }
 }
 
@@ -25,8 +25,6 @@ EPollPoller::~EPollPoller(){
 
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels){
-    LOG_INFO("func=%s => fd total count:%lu \n", __FUNCTION__, channels_.size());
-
     int numEvents = ::epoll_wait(epollfd_,
                                  &*events_.begin(),
                                  static_cast<int>(events_.size()),
@@ -35,17 +33,16 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels){
     Timestamp now(Timestamp::now());
 
     if(numEvents > 0){
-        LOG_INFO("func=%s => %d events happened \n", __FUNCTION__, numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if(static_cast<size_t>(numEvents) == events_.size()){
             events_.resize(events_.size() * 2); // 扩容
         }
     }else if(numEvents == 0){   // 超时
-        LOG_DEBUG("func=%s => nothing happened \n", __FUNCTION__); 
+        LOG_DEBUG <<  " => nothing happened";
     }else { // 出错
         if(savedErrno != EINTR){    // 不是被信号中断, 中断可不用管
             errno = savedErrno;
-            LOG_ERROR("EPollPoller::poll() err:%d \n", savedErrno);
+            LOG_ERROR << "EPollPoller::poll() err:" << savedErrno << "\n";
         }
     }
 
@@ -54,8 +51,6 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels){
 
 void EPollPoller::updateChannel(Channel *channel){
     const int index = channel->index();
-    LOG_INFO("func=%s => fd=%d events=%d index=%d \n", __FUNCTION__,
-             channel->fd(), channel->events(), index);
 
     if(index == kNew || index == kDeleted){
         int fd = channel->fd();
@@ -79,7 +74,6 @@ void EPollPoller::updateChannel(Channel *channel){
 
 void EPollPoller::removeChannel(Channel *channel){
     int fd = channel->fd();
-    LOG_INFO("func=%s => fd=%d \n", __FUNCTION__, fd);
 
     channels_.erase(fd);
 
@@ -109,10 +103,10 @@ void EPollPoller::update(int operation, Channel *channel){
 
     if(::epoll_ctl(epollfd_, operation, fd, &event) < 0){
         if(operation == EPOLL_CTL_DEL){
-            LOG_ERROR("EPollPoller::update() EPOLL_CTL_DEL error:%d \n", errno);
+            LOG_ERROR << "EPollPoller::update() EPOLL_CTL_DEL error:" << errno << "\n";
         } 
         else{
-            LOG_FATAL("EPollPoller::update() epoll_ctl error:%d \n", errno);
+            LOG_FATAL << "EPollPoller::update() epoll_ctl error:" << errno << "\n";
         }
     }
 }

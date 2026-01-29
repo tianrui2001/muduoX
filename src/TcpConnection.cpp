@@ -17,7 +17,7 @@ static EventLoop *CheckLoopNotNull(EventLoop *loop)
 {
     if (loop == nullptr)
     {
-        LOG_FATAL("%s:%s:%d mainLoop is null!\n", __FILE__, __FUNCTION__, __LINE__);
+        LOG_FATAL << " mainLoop is null!";
     }
     return loop;
 }
@@ -51,12 +51,11 @@ TcpConnection::TcpConnection(EventLoop *loop,
         std::bind(&TcpConnection::handleError, this)
     );
 
-    LOG_INFO("TcpConnection::ctor[%s] at fd=%d\n", name_.c_str(), sockfd);
     socket_->setKeepAlive(true);
 }
 
 TcpConnection::~TcpConnection(){
-     LOG_INFO("TcpConnection::dtor[%s] at fd=%d state=%d\n", name_.c_str(), channel_->fd(), (int)state_);
+    LOG_INFO << "TcpConnection::dtor[" << name_ << "] at fd=" << channel_->fd() << " state=" << (int)state_ << "\n";
 }
 
 void TcpConnection::send(const std::string &buf){
@@ -86,7 +85,7 @@ void TcpConnection::sendFile(int filefd, off_t off, size_t count){
         }
     }
     else {
-        LOG_ERROR("TcpConnection is not connected, give up sendFile\n");
+        LOG_ERROR << "TcpConnection is not connected, give up sendFile\n";
     }
 }
 
@@ -141,7 +140,7 @@ void TcpConnection::handleRead(Timestamp recvTime){
     else    // 出错
     {
         errno = savedErrno;
-        LOG_ERROR("TcpConnection::handleRead() err:%d\n", errno);
+        LOG_ERROR << "TcpConnection::handleRead() err:" << errno << "\n";
         handleError();
     }
 }
@@ -173,18 +172,17 @@ void TcpConnection::handleWrite(){
             }
         }
         else {
-            LOG_ERROR("TcpConnection::handleWrite() err:%d\n", savedErrno);
+            LOG_ERROR << "TcpConnection::handleWrite() err:" << savedErrno << "\n";
         }
     }
     else
     {
-        LOG_ERROR("TcpConnection fd=%d is down, no more writing", channel_->fd());
+        LOG_ERROR << "TcpConnection fd=" << channel_->fd() << " is down, no more writing\n";
     }
 }
 
 // poller => channel::closeCallback_ => TcpConnection::handleClose
 void TcpConnection::handleClose(){
-    LOG_INFO("TcpConnection::handleClose fd=%d state=%d\n", channel_->fd(), (int)state_);
     setState(kDisconnected);
     channel_->disableAll();
 
@@ -205,7 +203,7 @@ void TcpConnection::handleError(){
         err = optval;
     }
 
-    LOG_ERROR("TcpConnection::handleError name:%s - SO_ERROR:%d\n", name_.c_str(), err);
+    LOG_ERROR << "TcpConnection::handleError name:" << name_ << " - SO_ERROR:" << err << "\n";
 }
 
 void TcpConnection::sendInLoop(const void *message, size_t len){
@@ -214,7 +212,7 @@ void TcpConnection::sendInLoop(const void *message, size_t len){
     bool faultError = false;
 
     if(state_ == kDisconnected){
-        LOG_ERROR("TcpConnection::sendInLoop disconnected, give up writing\n");
+        LOG_ERROR << "TcpConnection::sendInLoop disconnected, give up writing\n";
         return;
     }
 
@@ -238,7 +236,7 @@ void TcpConnection::sendInLoop(const void *message, size_t len){
         {
             nwrote = 0;
             if(errno != EWOULDBLOCK){   // EWOULDBLOCK表示非阻塞情况下没有数据后的正常返回 等同于EAGAIN
-                LOG_ERROR("TcpConnection::sendInLoop err:%d\n", errno);
+                LOG_ERROR << "TcpConnection::sendInLoop err:" << errno << "\n";
                 if(errno == EPIPE || errno == ECONNRESET){ // SIGPIPE
                     //方已关闭连接的写端 或  socket 重置
                     faultError = true;
@@ -286,7 +284,7 @@ void TcpConnection::sendFileInLoop(int filefd, off_t off, size_t count){
     bool faultError = false;
 
     if(state_ == kDisconnected){
-        LOG_ERROR("TcpConnection::sendFileInLoop disconnected, give up writing\n");
+        LOG_ERROR << "TcpConnection::sendFileInLoop disconnected, give up writing\n";
         return;
     }
 
@@ -309,7 +307,7 @@ void TcpConnection::sendFileInLoop(int filefd, off_t off, size_t count){
         {
             nwrote = 0;
             if(errno != EWOULDBLOCK){   // EWOULDBLOCK表示非阻塞情况下没有数据后的正常返回 等同于EAGAIN
-                LOG_ERROR("TcpConnection::sendFileInLoop err:%d\n", errno);
+                LOG_ERROR << "TcpConnection::sendFileInLoop err:" << errno << "\n";
                 if(errno == EPIPE || errno == ECONNRESET){ // SIGPIPE
                     //socket 重置
                     faultError = true;

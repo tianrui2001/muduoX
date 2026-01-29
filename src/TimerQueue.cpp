@@ -12,7 +12,7 @@ int createTimerfd(){
     // CLOCK_MONOTONIC: 一个只能向前、不能后退、永远不会跳变的“流逝时间”计数器
     int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
     if(timerfd < 0){
-        LOG_FATAL("Failed in timerfd_create");
+        LOG_FATAL << "Failed in timerfd_create";
     }
 
     return timerfd;
@@ -37,7 +37,7 @@ void readTimerfd(int timerfd, Timestamp now){
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
     if(n != sizeof howmany){
-        LOG_ERROR("TimerQueue::handleRead() reads %lu bytes instead of 8\n", n);
+        LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
     }
 }
 
@@ -60,7 +60,7 @@ void resetTimerfd(int timerfd, Timestamp expiration){
      *      old_value：指向itimerspec结构体，用于存储定时器之前的设置，可以设为NULL。
      **/
     if(::timerfd_settime(timerfd, 0, &newValue, &oldValue) < 0){
-        LOG_ERROR("timerfd_settime() error");
+        LOG_ERROR << "timerfd_settime() error";
     }
 }
 
@@ -119,7 +119,7 @@ void TimerQueue::cancelInLoop(TimerId timerId){
     if(it != activeTimers_.end()){  // 在activeTimers_中找到了，在2个set中删除对应的项
         size_t n = timers_.erase(std::make_pair(it->first->expiration(), it->first));
         if(n != 1){
-            LOG_ERROR("TimerQueue::cancelInLoop erase timer failed");
+            LOG_ERROR << "TimerQueue::cancelInLoop erase timer failed";
         }
 
         delete it->first;
@@ -158,7 +158,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now){
         ActiveTimer timer(it.second, it.second->sequence());
         size_t n = activeTimers_.erase(timer);
         if(n != 1){
-            LOG_ERROR("TimerQueue::getExpired erase timer failed");
+            LOG_ERROR << "TimerQueue::getExpired erase timer failed";
         }
     }
 

@@ -59,8 +59,6 @@ void Channel::update(){
 }
 
 void Channel::handleEventWithGuard(Timestamp recvTime){
-    LOG_INFO("Channel::handleEventWithGuard revents:%d\n", revents_);
-
     // 关闭事件 优先处理
     if(revents_ & EPOLLHUP && !(revents_ & EPOLLIN)){
         if(closeCallback_){
