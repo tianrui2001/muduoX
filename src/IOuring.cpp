@@ -29,7 +29,7 @@ void RWOperation::appendIOVec(const iovec &iov)
 	iovec_.emplace_back(iov);
 }
 
-void File::asynRW(RWOperation&& op, RWCallback &&cb){
+void File::asyncRW(RWOperation&& op, RWCallback &&cb){
   IOContext ioCtx(shared_from_this(), std::move(op), std::move(cb));
   uringManager_->appendIOContext(std::move(ioCtx)); // 提交给UringManager处理
 }
@@ -79,7 +79,7 @@ UringManager::~UringManager(){
 }
 
 std::shared_ptr<File> UringManager::registerFile(const std::string& filePath){
-  int fd = ::open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+  int fd = ::open(filePath.c_str(), O_RDWR);
   if(fd < 0){
     LOG_ERROR << "Failed to open file: " << filePath;
     return std::shared_ptr<File>();

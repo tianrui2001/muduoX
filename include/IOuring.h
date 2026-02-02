@@ -48,7 +48,7 @@ public:
 
     ~File() { ::close(fd_); }
 
-    void asynRW(RWOperation&& op, RWCallback &&cb);
+    void asyncRW(RWOperation&& op, RWCallback &&cb);
 
     int fd() const { return fd_; }
 

@@ -12,6 +12,7 @@
 #include "Socket.h"
 #include "Channel.h"
 #include "EventLoop.h"
+#include "Buffer.h"
 
 static EventLoop *CheckLoopNotNull(EventLoop *loop)
 {
@@ -67,6 +68,22 @@ void TcpConnection::send(const std::string &buf){
         else{
             loop_->runInLoop(
                 std::bind(&TcpConnection::sendInLoop, this, buf.c_str(), buf.size())
+            );
+        }
+    }
+}
+
+void  TcpConnection::send(Buffer* buf){
+    if(state_ == kConnected)
+    {
+        if(loop_->isInLoopThread()){
+            sendInLoop(buf->peek(), buf->readableBytes());
+            buf->retrieveAll();
+        }
+        else{
+            void (TcpConnection::*fp)(const void*, size_t) = &TcpConnection::sendInLoop;
+            loop_->runInLoop(
+                std::bind(fp, this, buf->retrieveAllAsString().c_str(), buf->readableBytes())
             );
         }
     }

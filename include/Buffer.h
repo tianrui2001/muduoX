@@ -31,6 +31,11 @@ public:
     // 返回可读数据的起始地址
     const char* peek() const { return begin() +readerIndex_; }
 
+    void retrieveUntil(const char* end)
+    {
+        retrieve(end - peek());
+    }
+
     // 复位可读数据的位置
     void retrieve(size_t len){
         if(len < readableBytes()){  // 只读走了一部分数据

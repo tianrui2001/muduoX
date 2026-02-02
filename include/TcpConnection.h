@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <atomic>
+#include <any>
 
 #include "Nocopyable.h"
 #include "InetAddress.h"
@@ -30,6 +31,7 @@ public:
     ~TcpConnection();
 
     void send(const std::string &buf); // 发送数据
+    void send(Buffer* buf); // 发送数据, 零拷贝，避免多次拷贝数据
     void sendFile(int filefd, off_t off, size_t count); // 发送文件
     void shutdown(); // 关闭连接
     void connectEstablished(); // 连接建立
@@ -50,6 +52,10 @@ public:
         highWaterMarkCallback_ = cb;
         highWaterMark_ = highWaterMark;
     }
+
+    void setContext(const std::any &context) { context_ = context; }
+    const std::any& getContext() const { return context_; }
+    std::any* getMutableContext() { return &context_; }
 
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
@@ -84,4 +90,6 @@ private:
     size_t highWaterMark_;  // 高水位标记
     Buffer inputBuffer_;  // 读缓冲区
     Buffer outputBuffer_; // 写缓冲区
+
+    std::any context_; // 用户自定义数据
 };
