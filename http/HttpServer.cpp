@@ -44,18 +44,23 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp 
     // 1. 取出上下文
     HttpContext* context = std::any_cast<HttpContext>(conn->getMutableContext());
 
-    // 2. 状态机解析 (调用你移植的解析逻辑)
-    if (!context->parseRequest(buf, receiveTime)) {
-        conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
-        conn->shutdown();
-    }
+    while(buf->readableBytes() > 0){
+        // 2. 状态机解析 (调用你移植的解析逻辑)
+        if (!context->parseRequest(buf, receiveTime)) {
+            conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+            conn->shutdown();
+        }
 
-    // 3. 解析完成，进入业务逻辑
-    if (context->gotAll()) {
-        LOG_DEBUG << "HttpServer::onMessage - Request Complete";
-        onRequest(conn, context->request());
-        context->reset(); // 重置状态机，准备处理 Keep-Alive 的下一个请求
+        // 3. 解析完成，进入业务逻辑
+        if (context->gotAll()) {
+            LOG_DEBUG << "HttpServer::onMessage - Request Complete";
+            onRequest(conn, context->request());
+            context->reset(); // 重置状态机，准备处理 Keep-Alive 的下一个请求
+        } else {
+            break; // 继续等待更多数据
+        }
     }
+    
 }
 
 void HttpServer::onRequest(const TcpConnectionPtr& conn, const HttpRequest& req)
@@ -75,9 +80,11 @@ void HttpServer::onRequest(const TcpConnectionPtr& conn, const HttpRequest& req)
     // 3. 【核心修改】检查回调是否处理了该请求
     // 如果状态码不是 Unknown (0)，说明回调已经处理了，直接发送
     if (response.statusCode() != HttpResponse::kUnknown) {
-        Buffer buf;
-        response.appendToBuffer(&buf);
-        conn->send(&buf);
+        auto buf = std::make_shared<Buffer>();
+        response.appendToBuffer(buf.get());
+        conn->getLoop()->runInLoop([conn, buf, response](){
+            conn->send(buf.get());
+        });
         if (response.closeConnection()) {
             conn->shutdown();
         }
@@ -214,8 +221,10 @@ void HttpServer::handleError(const TcpConnectionPtr& conn, HttpResponse& respons
     response.setBody("<html><body><h1>" + std::to_string(statusCode) + " " + msg + "</h1></body></html>");
     response.setCloseConnection(true);
     
-    Buffer buf;
-    response.appendToBuffer(&buf);
-    conn->send(&buf);
+    auto buf = std::make_shared<Buffer>();
+    response.appendToBuffer(buf.get());
+    conn->getLoop()->runInLoop([conn, buf, response](){
+            conn->send(buf.get());
+        });
     conn->shutdown();
 }
