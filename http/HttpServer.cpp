@@ -183,11 +183,25 @@ void HttpServer::handleStaticFile(const TcpConnectionPtr& conn,
         // 5. 序列化并发送
         Buffer outputBuf;
         response.appendToBuffer(&outputBuf);
-        conn->send(&outputBuf);
+         
+        // 使用只能指针来解决发送数据时内存失效的问题
+        auto sendDataPtr = std::make_shared<std::string>(outputBuf.retrieveAllAsString());
 
-        if (shouldClose) {
-            conn->shutdown();
-        }
+        LOG_INFO << "Callback sending data, size: " << sendDataPtr->size();
+
+        // 4. 【关键】：在 runInLoop 中捕获这个 shared_ptr
+        // 这样即使当前这个 io_uring 的 Lambda 结束了，
+        // sendDataPtr 指向的内存依然被 runInLoop 里的 Lambda 持有，直到发送完成
+        conn->getLoop()->runInLoop([conn, sendDataPtr, shouldClose]() {
+            // 在这里调用你现有的 send(const std::string&)
+            // 此时 sendDataPtr->c_str() 指向的内存是绝对安全的
+            conn->send(*sendDataPtr);
+
+            if (shouldClose) {
+                conn->shutdown();
+            }
+        });
+
         
         LOG_INFO << "File sent via io_uring: " << res << " bytes";
     });
